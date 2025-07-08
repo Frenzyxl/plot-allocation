@@ -1,376 +1,424 @@
 // DOM Elements
-const plots = document.querySelectorAll('.plot');
-const plotDetails = document.getElementById('plotDetails');
-const closeDetails = document.getElementById('closeDetails');
-const actionModal = document.getElementById('actionModal');
-const closeModal = document.getElementById('closeModal');
-const cancelAction = document.getElementById('cancelAction');
-const actionForm = document.getElementById('actionForm');
-const notification = document.getElementById('notification');
-const closeNotification = document.getElementById('closeNotification');
+const plots = document.querySelectorAll(".plot");
+const plotDetails = document.getElementById("plotDetails");
+const closeDetails = document.getElementById("closeDetails");
+const actionModal = document.getElementById("actionModal");
+const closeModal = document.getElementById("closeModal");
+const cancelAction = document.getElementById("cancelAction");
+const actionForm = document.getElementById("actionForm");
+const notification = document.getElementById("notification");
+const closeNotification = document.getElementById("closeNotification");
+const randomizeBtn = document.getElementById("randomizeBtn");
 
 // Plot detail elements
-const plotId = document.getElementById('plotId');
-const plotSize = document.getElementById('plotSize');
-const plotPrice = document.getElementById('plotPrice');
-const plotStatus = document.getElementById('plotStatus');
-const reserveBtn = document.getElementById('reserveBtn');
-const purchaseBtn = document.getElementById('purchaseBtn');
-const modalTitle = document.getElementById('modalTitle');
-const confirmAction = document.getElementById('confirmAction');
+const plotId = document.getElementById("plotId");
+const plotSize = document.getElementById("plotSize");
+const plotPrice = document.getElementById("plotPrice");
+const plotStatus = document.getElementById("plotStatus");
+const reserveBtn = document.getElementById("reserveBtn");
+const purchaseBtn = document.getElementById("purchaseBtn");
+const modalTitle = document.getElementById("modalTitle");
+const confirmAction = document.getElementById("confirmAction");
 
 // Current selected plot
 let selectedPlot = null;
-let currentAction = '';
+let currentAction = "";
 
-// Nigeria state IDs and names
-const nigeriaStates = [
-  { id: 'NG-AB', name: 'Abia' },
-  { id: 'NG-AD', name: 'Adamawa' },
-  { id: 'NG-AK', name: 'Akwa Ibom' },
-  { id: 'NG-AN', name: 'Anambra' },
-  { id: 'NG-BA', name: 'Bauchi' },
-  { id: 'NG-BE', name: 'Benue' },
-  { id: 'NG-BO', name: 'Borno' },
-  { id: 'NG-BY', name: 'Bayelsa' },
-  { id: 'NG-CR', name: 'Cross River' },
-  { id: 'NG-DE', name: 'Delta' },
-  { id: 'NG-EB', name: 'Ebonyi' },
-  { id: 'NG-ED', name: 'Edo' },
-  { id: 'NG-EK', name: 'Ekiti' },
-  { id: 'NG-EN', name: 'Enugu' },
-  { id: 'NG-FC', name: 'Federal Capital Territory' },
-  { id: 'NG-GO', name: 'Gombe' },
-  { id: 'NG-IM', name: 'Imo' },
-  { id: 'NG-JI', name: 'Jigawa' },
-  { id: 'NG-KD', name: 'Kaduna' },
-  { id: 'NG-KE', name: 'Kebbi' },
-  { id: 'NG-KN', name: 'Kano' },
-  { id: 'NG-KO', name: 'Kogi' },
-  { id: 'NG-KW', name: 'Kwara' },
-  { id: 'NG-LA', name: 'Lagos' },
-  { id: 'NG-NA', name: 'Nassarawa' },
-  { id: 'NG-NI', name: 'Niger' },
-  { id: 'NG-OG', name: 'Ogun' },
-  { id: 'NG-ON', name: 'Ondo' },
-  { id: 'NG-OS', name: 'Osun' },
-  { id: 'NG-OY', name: 'Oyo' },
-  { id: 'NG-PL', name: 'Plateau' },
-  { id: 'NG-RI', name: 'Rivers' },
-  { id: 'NG-SO', name: 'Sokoto' },
-  { id: 'NG-TA', name: 'Taraba' },
-  { id: 'NG-YO', name: 'Yobe' },
-  { id: 'NG-ZA', name: 'Zamfara' }
+// Configuration: Blocks to exclude (grey out and make non-interactive)
+const excludedBlocks = [
+  // Add the block IDs you want to exclude here
+  // Example: 'block-f', 'block-h', 'block-q'
+  "block-h",
+  "block-q",
+  "block-f",
 ];
 
-// State status map
-const stateStatus = {};
+// All possible layout blocks
+const allLayoutBlocks = [
+  { id: "block-a", name: "Block A" },
+  { id: "block-b", name: "Block B" },
+  { id: "block-c", name: "Block C" },
+  { id: "block-d", name: "Block D" },
+  { id: "block-e", name: "Block E" },
+  { id: "block-f", name: "Block F" },
+  { id: "block-g", name: "Block G" },
+  { id: "block-h", name: "Block H" },
+  { id: "block-i", name: "Block I" },
+  { id: "block-j", name: "Block J" },
+  { id: "block-k", name: "Block K" },
+  { id: "block-l", name: "Block L" },
+  { id: "block-m", name: "Block M" },
+  { id: "block-n", name: "Block N" },
+  { id: "block-o", name: "Block O" },
+  { id: "block-p", name: "Block P" },
+  { id: "block-q", name: "Block Q" },
+  { id: "block-r", name: "Block R" },
+  { id: "block-s", name: "Block S" },
+  { id: "block-t", name: "Block T" },
+  { id: "block-u", name: "Block U" },
+];
+
+// Filter out excluded blocks to create the active blocks list
+const layoutBlocks = allLayoutBlocks.filter(
+  (block) => !excludedBlocks.includes(block.id)
+);
+
+// Layout block status map
+const layoutBlockStatus = {};
 
 // Initialize all event listeners
 function initializeEventListeners() {
-    // Close buttons
-    closeDetails.addEventListener('click', hidePlotDetails);
-    closeModal.addEventListener('click', hideModal);
-    cancelAction.addEventListener('click', hideModal);
-    closeNotification.addEventListener('click', hideNotification);
+  // Close buttons
+  closeDetails.addEventListener("click", hidePlotDetails);
+  closeModal.addEventListener("click", hideModal);
+  cancelAction.addEventListener("click", hideModal);
+  closeNotification.addEventListener("click", hideNotification);
 
-    // Action buttons
-    reserveBtn.addEventListener('click', () => showActionModal('reserve'));
-    purchaseBtn.addEventListener('click', () => showActionModal('purchase'));
+  // Action buttons
+  reserveBtn.addEventListener("click", () => showActionModal("reserve"));
+  purchaseBtn.addEventListener("click", () => showActionModal("purchase"));
 
-    // Form submission
-    actionForm.addEventListener('submit', handleFormSubmission);
+  // Randomize button
+  if (randomizeBtn) {
+    randomizeBtn.addEventListener("click", randomizeAllStatuses);
+  }
 
-    // Close modal when clicking outside
-    actionModal.addEventListener('click', (e) => {
-        if (e.target === actionModal) {
-            hideModal();
-        }
-    });
+  // Form submission
+  actionForm.addEventListener("submit", handleFormSubmission);
 
-    // Close details when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!plotDetails.contains(e.target) && !e.target.closest('.plot')) {
-            hidePlotDetails();
-        }
-    });
+  // Close modal when clicking outside
+  actionModal.addEventListener("click", (e) => {
+    if (e.target === actionModal) {
+      hideModal();
+    }
+  });
+
+  // Close details when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!plotDetails.contains(e.target) && !e.target.closest(".plot")) {
+      hidePlotDetails();
+    }
+  });
 }
 
 // Hide plot details
 function hidePlotDetails() {
-    plotDetails.classList.remove('active');
-    nigeriaStates.forEach(s => {
-        const e = document.getElementById(s.id);
-        if (e) e.classList.remove('selected');
-    });
-    selectedPlot = null;
+  plotDetails.classList.remove("active");
+  layoutBlocks.forEach((b) => {
+    const e = document.getElementById(b.id);
+    if (e) e.classList.remove("selected");
+  });
+  selectedPlot = null;
 }
 
 // Show action modal
 function showActionModal(action) {
-    if (!selectedPlot) {
-        showNotification('Please select a state first.', 'error');
-        return;
-    }
+  if (!selectedPlot) {
+    showNotification("Please select a block first.", "error");
+    return;
+  }
 
-    currentAction = action;
-    
-    if (action === 'reserve') {
-        modalTitle.textContent = 'Reserve State';
-        confirmAction.textContent = 'Reserve State';
-        confirmAction.className = 'btn btn-primary';
-    } else {
-        modalTitle.textContent = 'Purchase State';
-        confirmAction.textContent = 'Purchase State';
-        confirmAction.className = 'btn btn-primary';
-    }
+  currentAction = action;
 
-    // Clear form
-    actionForm.reset();
-    
-    // Show modal
-    actionModal.classList.add('active');
+  if (action === "reserve") {
+    modalTitle.textContent = "Reserve Block";
+    confirmAction.textContent = "Reserve Block";
+    confirmAction.className = "btn btn-primary";
+  } else {
+    modalTitle.textContent = "Purchase Block";
+    confirmAction.textContent = "Purchase Block";
+    confirmAction.className = "btn btn-primary";
+  }
+
+  // Clear form
+  actionForm.reset();
+
+  // Show modal
+  actionModal.classList.add("active");
 }
 
 // Hide modal
 function hideModal() {
-    actionModal.classList.remove('active');
-    currentAction = '';
+  actionModal.classList.remove("active");
+  currentAction = "";
 }
 
 // Handle form submission
 function handleFormSubmission(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(actionForm);
-    const clientData = {
-        name: document.getElementById('clientName').value,
-        email: document.getElementById('clientEmail').value,
-        phone: document.getElementById('clientPhone').value,
-        id: document.getElementById('clientId').value,
-        action: currentAction,
-        plotId: selectedPlot ? selectedPlot.id : 'Unknown'
-    };
+  e.preventDefault();
 
-    // Validate form data
-    if (!clientData.name || !clientData.email || !clientData.phone || !clientData.id) {
-        showNotification('Please fill in all required fields.', 'error');
-        return;
-    }
+  const formData = new FormData(actionForm);
+  const clientData = {
+    name: document.getElementById("clientName").value,
+    email: document.getElementById("clientEmail").value,
+    phone: document.getElementById("clientPhone").value,
+    id: document.getElementById("clientId").value,
+    action: currentAction,
+    plotId: selectedPlot ? selectedPlot.id : "Unknown",
+  };
 
-    if (!isValidEmail(clientData.email)) {
-        showNotification('Please enter a valid email address.', 'error');
-        return;
-    }
+  // Validate form data
+  if (
+    !clientData.name ||
+    !clientData.email ||
+    !clientData.phone ||
+    !clientData.id
+  ) {
+    showNotification("Please fill in all required fields.", "error");
+    return;
+  }
 
-    if (!isValidPhone(clientData.phone)) {
-        showNotification('Please enter a valid phone number.', 'error');
-        return;
-    }
+  if (!isValidEmail(clientData.email)) {
+    showNotification("Please enter a valid email address.", "error");
+    return;
+  }
 
-    // Process the action
-    processPlotAction(clientData);
+  if (!isValidPhone(clientData.phone)) {
+    showNotification("Please enter a valid phone number.", "error");
+    return;
+  }
+
+  // Process the action
+  processPlotAction(clientData);
 }
 
 // Show notification
-function showNotification(message, type = 'info') {
-    const notificationMessage = document.getElementById('notificationMessage');
-    notificationMessage.textContent = message;
-    
-    // Set notification type
-    notification.className = `notification ${type}`;
-    
-    // Show notification
-    notification.classList.add('active');
-    
-    // Auto hide after 5 seconds
-    setTimeout(() => {
-        hideNotification();
-    }, 5000);
+function showNotification(message, type = "info") {
+  const notificationMessage = document.getElementById("notificationMessage");
+  notificationMessage.textContent = message;
+
+  // Set notification type
+  notification.className = `notification ${type}`;
+
+  // Show notification
+  notification.classList.add("active");
+
+  // Auto hide after 5 seconds
+  setTimeout(() => {
+    hideNotification();
+  }, 5000);
 }
 
 // Hide notification
 function hideNotification() {
-    notification.classList.remove('active');
+  notification.classList.remove("active");
 }
 
 // Utility function to validate email
 function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
 }
 
 // Utility function to validate phone number
 function isValidPhone(phone) {
-    // Nigerian phone number validation - accepts formats like:
-    // 08026780157, +2348026780157, 2348026780157, 8026780157
-    const phoneRegex = /^(\+?234|0)?[789][01]\d{8}$/;
-    return phoneRegex.test(phone.replace(/\s/g, ''));
+  // Nigerian phone number validation - accepts formats like:
+  // 08026780157, +2348026780157, 2348026780157, 8026780157
+  const phoneRegex = /^(\+?234|0)?[789][01]\d{8}$/;
+  return phoneRegex.test(phone.replace(/\s/g, ""));
 }
 
 // Add keyboard navigation
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        hideModal();
-        hidePlotDetails();
-    }
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape") {
+    hideModal();
+    hidePlotDetails();
+  }
 });
 
 // Utility to randomize status
 function randomStatus() {
-  const statuses = ['available', 'sold', 'reserved'];
-  return statuses[Math.floor(Math.random() * statuses.length)];
+  const statuses = ["available", "sold", "reserved"];
+  const randomIndex = Math.floor(Math.random() * statuses.length);
+  const status = statuses[randomIndex];
+  return status;
 }
 
-// Handle state click
-function handleStateClick(state, el) {
-  console.log('=== STATE CLICK DEBUG ===');
-  console.log('State clicked:', state.name, state.id);
-  console.log('Element:', el);
-  
-  // Remove previous selection
-  nigeriaStates.forEach(s => {
-    const e = document.getElementById(s.id);
-    if (e) e.classList.remove('selected');
+// Function to randomize all statuses
+function randomizeAllStatuses() {
+  layoutBlocks.forEach((block) => {
+    const status = randomStatus();
+    layoutBlockStatus[block.id] = status;
+
+    // Try multiple ways to find the element
+    let el =
+      document.getElementById(block.id) ||
+      document.querySelector(`path[id="${block.id}"]`) ||
+      document.querySelector(`path[title="${block.name}"]`);
+
+    if (el) {
+      // Clear existing status classes
+      el.classList.remove("available", "sold", "reserved");
+      // Add new status
+      el.classList.add(status);
+    }
   });
-  el.classList.add('selected');
-  selectedPlot = el;
-  console.log('Selected plot set to:', selectedPlot);
-  
-  showPlotDetailsForState(state, el);
+
+  // Update statistics
+  updateStatistics();
+
+  // Show notification
+  showNotification("All block statuses have been randomized!", "success");
 }
 
-// Show details for a state
-function showPlotDetailsForState(state, el) {
-  console.log('=== SHOW DETAILS DEBUG ===');
-  console.log('Showing details for state:', state.name);
-  
-  // Check if DOM elements exist
-  console.log('plotId element:', plotId);
-  console.log('plotDetails element:', plotDetails);
-  
-  plotId.textContent = state.name;
-  plotSize.textContent = 'N/A';
-  plotPrice.textContent = '₦' + (Math.floor(Math.random() * 10) * 1000000 + 5000000).toLocaleString();
-  const status = stateStatus[state.id];
+// Handle layout block click
+function handleLayoutBlockClick(block, el) {
+  // Remove previous selection
+  layoutBlocks.forEach((b) => {
+    const e =
+      document.getElementById(b.id) ||
+      document.querySelector(`path[id="${b.id}"]`) ||
+      document.querySelector(`path[title="${b.name}"]`);
+    if (e) e.classList.remove("selected");
+  });
+
+  el.classList.add("selected");
+  selectedPlot = el;
+
+  showPlotDetailsForLayoutBlock(block, el);
+}
+
+// Show details for a layout block
+function showPlotDetailsForLayoutBlock(block, el) {
+  plotId.textContent = block.name;
+  plotSize.textContent = "500 sqm - 1000 sqm";
+  plotPrice.textContent =
+    "₦" + (Math.floor(Math.random() * 5) * 500000 + 2000000).toLocaleString();
+  const status = layoutBlockStatus[block.id];
   plotStatus.textContent = status.charAt(0).toUpperCase() + status.slice(1);
 
   // Show/hide action buttons
-  if (status === 'available') {
-    reserveBtn.style.display = 'flex';
-    purchaseBtn.style.display = 'flex';
-  } else if (status === 'reserved') {
-    reserveBtn.style.display = 'none';
-    purchaseBtn.style.display = 'flex';
-    purchaseBtn.textContent = 'Purchase Reserved State';
+  if (status === "available") {
+    reserveBtn.style.display = "flex";
+    purchaseBtn.style.display = "flex";
+    purchaseBtn.textContent = "Purchase Now";
+  } else if (status === "reserved") {
+    reserveBtn.style.display = "none";
+    purchaseBtn.style.display = "flex";
+    purchaseBtn.textContent = "Purchase Reserved Block";
   } else {
-    reserveBtn.style.display = 'none';
-    purchaseBtn.style.display = 'none';
+    reserveBtn.style.display = "none";
+    purchaseBtn.style.display = "none";
   }
-  
-  console.log('Before adding active class - plotDetails classes:', plotDetails.className);
-  plotDetails.classList.add('active');
-  console.log('After adding active class - plotDetails classes:', plotDetails.className);
-  
-  // Check computed styles
-  const computedStyle = window.getComputedStyle(plotDetails);
-  console.log('Computed display:', computedStyle.display);
-  console.log('Computed opacity:', computedStyle.opacity);
-  console.log('Computed visibility:', computedStyle.visibility);
-  console.log('Computed position:', computedStyle.position);
-  console.log('Computed top:', computedStyle.top);
-  console.log('Computed left:', computedStyle.left);
-  console.log('Computed width:', computedStyle.width);
-  console.log('Computed height:', computedStyle.height);
+
+  plotDetails.classList.add("active");
 }
 
-// On DOMContentLoaded, randomize and color states
-window.addEventListener('DOMContentLoaded', () => {
+// On DOMContentLoaded, randomize and color blocks
+window.addEventListener("DOMContentLoaded", () => {
   // Initialize event listeners for modals and UI
   initializeEventListeners();
-  
-  // Assign random status to each state
-  nigeriaStates.forEach(state => {
-    const status = randomStatus();
-    stateStatus[state.id] = status;
-    const el = document.getElementById(state.id);
+
+  // Debug: Check if SVG elements exist
+  const allPaths = document.querySelectorAll('path[id^="block-"]');
+
+  // Handle all blocks (both active and excluded)
+  allLayoutBlocks.forEach((block) => {
+    // Try multiple ways to find the element
+    let el = document.getElementById(block.id);
+    if (!el) {
+      // Fallback: try querySelector
+      el = document.querySelector(`path[id="${block.id}"]`);
+    }
+    if (!el) {
+      // Fallback: try by title attribute
+      el = document.querySelector(`path[title="${block.name}"]`);
+    }
+
     if (el) {
-      el.classList.add(status);
-      console.log(`Found element for ${state.id} (${state.name}):`, el);
-      
-      el.addEventListener('click', (e) => {
-        console.log('=== CLICK EVENT FIRED ===');
-        console.log('Event target:', e.target);
-        console.log('State clicked:', state.name, state.id);
-        console.log('Element:', el);
-        e.preventDefault();
-        e.stopPropagation();
-        handleStateClick(state, el);
-      });
-      
-      // Also add a simple test click to see if it's clickable
-      el.addEventListener('mousedown', () => {
-        console.log(`Mouse down on ${state.name}`);
-      });
-      
-      console.log(`Added click listener to ${state.id} (${state.name})`);
+      if (excludedBlocks.includes(block.id)) {
+        // This is an excluded block - make it grey and non-interactive
+        el.classList.add("excluded");
+      } else {
+        // This is an active block - assign random status and make interactive
+        const status = randomStatus();
+        layoutBlockStatus[block.id] = status;
+        el.classList.add(status);
+
+        // Add click event listener
+        el.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleLayoutBlockClick(block, el);
+        });
+      }
     } else {
-      console.log(`WARNING: Element not found for ${state.id} (${state.name})`);
     }
   });
+
   updateStatistics();
+
+  // Add a global click handler to debug any issues
+  document.addEventListener("click", (e) => {
+    if (
+      e.target.tagName === "path" &&
+      e.target.id &&
+      e.target.id.startsWith("block-")
+    ) {
+    }
+  });
 });
 
-// Update statistics for states
+// Update statistics for blocks
 function updateStatistics() {
-  const total = nigeriaStates.length;
-  let available = 0, sold = 0, reserved = 0;
-  nigeriaStates.forEach(state => {
-    const status = stateStatus[state.id];
-    if (status === 'available') available++;
-    else if (status === 'sold') sold++;
-    else if (status === 'reserved') reserved++;
+  const totalBlocks = layoutBlocks.length;
+
+  let available = 0,
+    sold = 0,
+    reserved = 0;
+
+  // Count blocks
+  layoutBlocks.forEach((block) => {
+    const status = layoutBlockStatus[block.id];
+    if (status === "available") available++;
+    else if (status === "sold") sold++;
+    else if (status === "reserved") reserved++;
   });
-  const statCards = document.querySelectorAll('.stat-content h3');
+
+  const statCards = document.querySelectorAll(".stat-content h3");
   if (statCards.length >= 4) {
-    statCards[0].textContent = total;
+    statCards[0].textContent = totalBlocks;
     statCards[1].textContent = available;
     statCards[2].textContent = sold;
     statCards[3].textContent = reserved;
   }
 }
 
-// Process plot action for states
+// Process plot action for blocks
 function processPlotAction(clientData) {
-  console.log('Processing action for:', clientData);
-  console.log('Confirm action element:', confirmAction);
-  
   // Check if confirmAction element exists
   if (!confirmAction) {
-    console.error('Confirm action element not found!');
-    showNotification('Error: Form button not found', 'error');
+    console.error("Confirm action element not found!");
+    showNotification("Error: Form button not found", "error");
     return;
   }
-  
+
   // Show loading state
   confirmAction.disabled = true;
-  confirmAction.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-  console.log('Set loading state');
-  
+  confirmAction.innerHTML =
+    '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
   setTimeout(() => {
-    console.log('Timeout completed');
+    // Get block name
+    const itemName = selectedPlot.id.replace("block-", "").toUpperCase();
+
     // Show success notification
-    if (currentAction === 'reserve') {
-      showNotification(`State ${selectedPlot.id.replace('NG-', '')} has been reserved successfully!`, 'success');
+    if (currentAction === "reserve") {
+      showNotification(
+        `Block ${itemName} has been reserved successfully!`,
+        "success"
+      );
     } else {
-      showNotification(`State ${selectedPlot.id.replace('NG-', '')} has been purchased successfully!`, 'success');
+      showNotification(
+        `Block ${itemName} has been purchased successfully!`,
+        "success"
+      );
     }
-    
+
     // Reset button and hide modal
     confirmAction.disabled = false;
-    confirmAction.innerHTML = currentAction === 'reserve' ? 'Reserve State' : 'Purchase State';
+    confirmAction.innerHTML =
+      currentAction === "reserve" ? "Reserve Block" : "Purchase Block";
     hideModal();
-    
-    console.log('Transaction completed:', clientData);
   }, 1000);
-} 
+}
